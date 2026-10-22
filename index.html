@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>SafeCircle™ | Intelligent Personal Safety Assistant & Guardian Network</title>
+  <meta name="description" content="SafeCircle is an intelligent personal safety companion offering one-touch SOS panic alerts, live journey tracking, trusted guardian circle sync, fake call escape shield, safe haven navigation, and AI safety guidance.">
+  
+  <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Leaflet CSS for Safe Haven & Live Route Map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="theme-guardian">
+
+  <!-- ==================== CAMOUFLAGE CALCULATOR OVERLAY ==================== -->
+  <div id="camouflage-container" class="camouflage-hidden" aria-hidden="true">
+    <div class="calc-wrapper">
+      <div class="calc-header">
+        <div class="calc-brand">
+          <span class="calc-logo-dot"></span>
+          <span>CALC-PRO FX991</span>
+        </div>
+        <button id="calc-secret-exit" class="calc-secret-btn" title="Secret SafeCircle Unlock" aria-label="Exit stealth mode">
+          <span class="calc-solar-cell"></span>
+        </button>
+      </div>
+      <div class="calc-screen" id="calc-display">0</div>
+      <div class="calc-keypad">
+        <button class="calc-btn calc-fn" data-action="clear">AC</button>
+        <button class="calc-btn calc-fn" data-action="backspace">DEL</button>
+        <button class="calc-btn calc-fn" data-action="percent">%</button>
+        <button class="calc-btn calc-op" data-action="op" data-val="/">÷</button>
+        
+        <button class="calc-btn" data-num="7">7</button>
+        <button class="calc-btn" data-num="8">8</button>
+        <button class="calc-btn" data-num="9">9</button>
+        <button class="calc-btn calc-op" data-action="op" data-val="*">×</button>
+        
+        <button class="calc-btn" data-num="4">4</button>
+        <button class="calc-btn" data-num="5">5</button>
+        <button class="calc-btn" data-num="6">6</button>
+        <button class="calc-btn calc-op" data-action="op" data-val="-">−</button>
+        
+        <button class="calc-btn" data-num="1">1</button>
+        <button class="calc-btn" data-num="2">2</button>
+        <button class="calc-btn" data-num="3">3</button>
+        <button class="calc-btn calc-op" data-action="op" data-val="+">+</button>
+        
+        <button class="calc-btn" data-num="0">0</button>
+        <button class="calc-btn" data-num=".">.</button>
+        <button class="calc-btn calc-fn" id="calc-stealth-hint">ℹ️</button>
+        <button class="calc-btn calc-equals" data-action="equals">=</button>
+      </div>
+      <div class="calc-footer-tip">
+        <p>Tip: Tap solar strip or enter <code>007=</code> to restore SafeCircle</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MAIN APPLICATION WRAPPER ==================== -->
+  <div id="app-root" class="app-layout">
+    
+    <!-- Top HUD Navigation Bar -->
+    <header class="top-nav" id="main-header">
+      <div class="nav-brand">
+        <div class="brand-shield-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <path d="m9 12 2 2 4-4"/>
+          </svg>
+          <span class="brand-pulse-beacon"></span>
+        </div>
+        <div class="brand-text-group">
+          <div class="brand-title">
+            <span class="brand-name">SafeCircle</span>
+            <span class="brand-badge">PRO GUARDIAN</span>
+          </div>
+          <span class="brand-sub">Autonomous Safety Assistant</span>
+        </div>
+      </div>
+
+      <!-- Live Telemetry HUD -->
+      <div class="telemetry-bar">
+        <div class="telemetry-item" id="gps-status-indicator" title="GPS Satellite Fix">
+          <span class="status-dot dot-live"></span>
+          <span class="telemetry-label">GPS:</span>
+          <span class="telemetry-val" id="gps-coords-display">Locating...</span>
+        </div>
+        <div class="telemetry-item" id="battery-status-indicator" title="Device Battery Status">
+          <svg class="hud-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="7" width="16" height="10" rx="2" ry="2"></rect>
+            <line x1="22" y1="11" x2="22" y2="13"></line>
+          </svg>
+          <span class="telemetry-val" id="battery-level-display">98%</span>
+        </div>
+        <div class="telemetry-item circle-sync" title="Circle Guardians Active">
+          <svg class="hud-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+          <span class="telemetry-val"><strong id="guardian-count-hud">4</strong> Connected</span>
+        </div>
+      </div>
+
+      <!-- Quick Action Controls -->
+      <div class="nav-actions">
+        <button id="btn-toggle-stealth" class="btn-action-ghost" title="Stealth Camouflage (Disguise as Calculator)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+          <span class="btn-text">Stealth</span>
+        </button>
+
+        <button id="btn-open-helplines" class="btn-action-ghost" title="Emergency Help Directory">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+          </svg>
+          <span class="btn-text">Helplines</span>
+        </button>
+
+        <button id="btn-quick-alarm" class="btn-action-siren" title="Sound High-Decibel Siren & Strobe">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          </svg>
+          <span class="btn-text">Siren</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Dynamic Navigation Tabs -->
+    <nav class="sub-nav-tabs" aria-label="Main Views">
+      <button class="nav-tab active" data-view="dashboard" id="tab-dashboard">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="9"></rect>
+          <rect x="14" y="3" width="7" height="5"></rect>
+          <rect x="14" y="12" width="7" height="9"></rect>
+          <rect x="3" y="16" width="7" height="5"></rect>
+        </svg>
+        <span>Command Deck</span>
+      </button>
+
+      <button class="nav-tab" data-view="journey" id="tab-journey">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="5" r="3"></circle>
+          <line x1="12" y1="22" x2="12" y2="8"></line>
+          <path d="M5 12H2a10 10 0 0 0 20 0h-3"></path>
+        </svg>
+        <span>Walk With Me</span>
+        <span class="badge-mini" id="journey-active-badge" style="display:none;">LIVE</span>
+      </button>
+
+      <button class="nav-tab" data-view="map" id="tab-map">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
+          <line x1="8" y1="2" x2="8" y2="18"></line>
+          <line x1="16" y1="6" x2="16" y2="22"></line>
+        </svg>
+        <span>Safe Havens Map</span>
+      </button>
+
+      <button class="nav-tab" data-view="circle" id="tab-circle">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <line x1="19" y1="8" x2="19" y2="14"></line>
+          <line x1="22" y1="11" x2="16" y2="11"></line>
+        </svg>
+        <span>Safe Circle</span>
+      </button>
+
+      <button class="nav-tab" data-view="ai-assistant" id="tab-ai-assistant">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2a10 10 0 0 1 10 10c0 5.523-4.477 10-10 10a10 10 0 0 1-10-10A10 10 0 0 1 12 2z"/>
+          <path d="M12 16v-4"/>
+          <path d="M12 8h.01"/>
+        </svg>
+        <span>Aegis AI Copilot</span>
+      </button>
+
+      <button class="nav-tab" data-view="vault" id="tab-vault">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+        </svg>
+        <span>Evidence Vault</span>
+      </button>
+    </nav>
+
+    <!-- Content Sections -->
+    <main class="main-content">
+
+      <!-- ================= VIEW 1: DASHBOARD COMMAND DECK ================= -->
+      <section id="view-dashboard" class="content-view active-view">
+        <div class="dashboard-grid">
+          
+          <!-- SOS Hero Panic Station -->
+          <div class="card hero-sos-card">
+            <div class="sos-card-header">
+              <div class="sos-status-tag">
+                <span class="status-glow"></span>
+                <span>INSTANT DISPATCH SYSTEM READY</span>
+              </div>
+              <span class="sos-mode-pill">Tap or Hold to Trigger</span>
+            </div>
+
+            <div class="sos-button-wrapper">
+              <div class="sos-pulse-wave wave-1"></div>
+              <div class="sos-pulse-wave wave-2"></div>
+              <div class="sos-pulse-wave wave-3"></div>
+              
+              <button id="btn-primary-sos" class="btn-giant-sos" aria-label="Trigger Emergency Panic SOS">
+                <div class="sos-inner-content">
+                  <span class="sos-main-text">SOS</span>
+                  <span class="sos-sub-text">EMERGENCY</span>
+                  <div class="sos-sub-instruction">3s Safeguard Countdown</div>
+                </div>
+              </button>
+            </div>
+
+            <div class="sos-dispatch-summary">
+              <div class="dispatch-chip">
+                <span class="chip-icon">📡</span>
+                <span>GPS Broadcast</span>
+              </div>
+              <div class="dispatch-chip">
+                <span class="chip-icon">💬</span>
+                <span>SMS/WhatsApp Alert</span>
+              </div>
+              <div class="dispatch-chip">
+                <span class="chip-icon">🔊</span>
+                <span>Siren & Strobe</span>
+              </div>
+              <div class="dispatch-chip">
+                <span class="chip-icon">⏺️</span>
+                <span>Evidence Audio Log</span>
+              </div>
+            </div>
+
+            <div class="sos-footer-controls">
+              <button id="btn-silent-sos" class="btn-outline-danger" title="Discreet alert with no noise or siren">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M11 5L6 9H2v6h4l5 4V5z"/>
+                  <line x1="23" y1="9" x2="17" y2="15"/>
+                  <line x1="17" y1="9" x2="23" y2="15"/>
+                </svg>
+                <span>Silent Stealth SOS</span>
+              </button>
+              
+              <button id="btn-test-sos" class="btn-outline-secondary" title="Practice triggering without dispatching real SMS">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+                </svg>
+                <span>Run Safety Drill</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Quick Safety Action Matrix -->
+          <div class="quick-tools-panel">
+            <h2 class="panel-section-title">Tactical Safety Tools</h2>
+            
+            <div class="tools-grid">
+              <!-- Fake Call Card -->
+              <div class="tool-card tool-fake-call" id="tool-card-fake-call">
+                <div class="tool-icon-box">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                  </svg>
+                </div>
+                <div class="tool-info">
+                  <h3>Fake Call Shield</h3>
+                  <p>Trigger an urgent realistic incoming call to excuse yourself gracefully.</p>
+                </div>
+                <div class="tool-actions-row">
+                  <button class="btn-micro-action" data-delay="5">Ring in 5s</button>
+                  <button class="btn-micro-action" data-delay="15">15s</button>
+                  <button class="btn-micro-action btn-highlight" data-delay="0">NOW</button>
+                </div>
+              </div>
+
+              <!-- Journey Tracker Quick Start -->
+              <div class="tool-card tool-walk" id="tool-card-walk">
+                <div class="tool-icon-box">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                  </svg>
+                </div>
+                <div class="tool-info">
+                  <h3>Walk With Me</h3>
+                  <p>Guardian journey timer with automated missed check-in alerts.</p>
+                </div>
+                <div class="tool-actions-row">
+                  <button class="btn-action-primary" id="btn-quick-start-walk">
+                    <span>Start 15m Walk</span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Discreet Audio Recorder -->
+              <div class="tool-card tool-recorder" id="tool-card-audio">
+                <div class="tool-icon-box">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                    <line x1="12" y1="19" x2="12" y2="23"></line>
+                    <line x1="8" y1="23" x2="16" y2="23"></line>
+                  </svg>
+                </div>
+                <div class="tool-info">
+                  <h3>Audio Evidence Log</h3>
+                  <p>Discreetly capture background audio logs with geo-timestamp.</p>
+                </div>
+                <div class="tool-actions-row">
+                  <button class="btn-action-secondary" id="btn-toggle-audio-rec">
+                    <span class="rec-dot"></span>
+                    <span id="audio-rec-label">Start Capture</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Strobe Flasher Card -->
+              <div class="tool-card tool-strobe" id="tool-card-strobe">
+                <div class="tool-icon-box">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                  </svg>
+                </div>
+                <div class="tool-info">
+                  <h3>Night SOS Strobe</h3>
+                  <p>High-intensity visual beacon to deter threats or attract night searchers.</p>
+                </div>
+                <div class="tool-actions-row">
+                  <button class="btn-action-warning" id="btn-toggle-strobe">
+                    <span>Activate Strobe</span>
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Live Circle Guardian Stream -->
+          <div class="card circle-preview-card">
+            <div class="card-header-flex">
+              <div>
+                <h2 class="card-title">Active Guardian Circle</h2>
+                <p class="card-subtitle">Auto-notified in any emergency incident</p>
+              </div>
+              <button class="btn-link-action" id="btn-go-to-circle">Manage All (4)</button>
+            </div>
+
+            <div class="circle-chips-row" id="dashboard-circle-chips">
+              <!-- Dynamically populated contacts -->
+            </div>
+
+            <div class="quick-ping-box">
+              <input type="text" id="quick-checkin-text" class="quick-checkin-input" placeholder="Quick message (e.g. In cab #KA01, safe!)" value="I am safe and heading home now!">
+              <button id="btn-send-checkin" class="btn-ping-circle">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="22" y1="2" x2="11" y2="13"></line>
+                  <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
+                <span>Broadcast Ping</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Nearby Safe Haven Peek -->
+          <div class="card safe-haven-peek">
+            <div class="card-header-flex">
+              <div>
+                <h2 class="card-title">Closest Safe Havens</h2>
+                <p class="card-subtitle">Verified 24/7 protection zones near your coordinates</p>
+              </div>
+              <button class="btn-link-action" id="btn-view-map-peek">View Full Map</button>
+            </div>
+
+            <div class="safe-haven-list" id="nearest-havens-list">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ================= VIEW 2: WALK WITH ME (JOURNEY GUARDIAN) ================= -->
+      <section id="view-journey" class="content-view">
+        <div class="journey-container">
+          <div class="journey-header">
+            <div>
+              <h2 class="view-title">Walk With Me · Live Journey Guardian</h2>
+              <p class="view-subtitle">Set your destination. If you don't check in by the countdown deadline, your Circle is instantly alerted with your live location.</p>
+            </div>
+            <div class="journey-status-badge" id="journey-header-status">
+              <span class="status-indicator-dot"></span>
+              <span id="journey-status-text">STANDBY</span>
+            </div>
+          </div>
+
+          <div class="journey-grid">
+            <!-- Journey Setup Form & Active Controls -->
+            <div class="card journey-controls-card">
+              
+              <!-- Form: When not active -->
+              <div id="journey-setup-panel" class="journey-panel">
+                <h3 class="panel-subtitle">Configure Your Journey</h3>
+                
+                <div class="form-group">
+                  <label for="journey-destination-input">Where are you heading?</label>
+                  <div class="input-with-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                      <circle cx="12" cy="10" r="3"></circle>
+                    </svg>
+                    <input type="text" id="journey-destination-input" placeholder="e.g., Metro Station, Campus Dormitory, Park Avenue" value="Central Metro Station">
+                  </div>
+                </div>
+
+                <div class="form-row-duo">
+                  <div class="form-group">
+                    <label for="journey-duration-select">Estimated Trip Duration</label>
+                    <select id="journey-duration-select" class="custom-select">
+                      <option value="5">5 Minutes (Quick Sprint)</option>
+                      <option value="15" selected>15 Minutes (Standard Walk)</option>
+                      <option value="30">30 Minutes (Commute / Ride)</option>
+                      <option value="45">45 Minutes (Long Transit)</option>
+                      <option value="60">60 Minutes</option>
+                    </select>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="journey-checkin-interval">Heartbeat Ping Interval</label>
+                    <select id="journey-checkin-interval" class="custom-select">
+                      <option value="3">Every 3 Minutes</option>
+                      <option value="5" selected>Every 5 Minutes</option>
+                      <option value="10">Every 10 Minutes</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="journey-vehicle-note">Transit Mode / Vehicle Details (Optional)</label>
+                  <input type="text" id="journey-vehicle-note" class="custom-input" placeholder="e.g. Uber White Prius Plate #4XYZ9, Driver: Alex">
+                </div>
+
+                <div class="guardian-checklist">
+                  <label class="checkbox-container">
+                    <input type="checkbox" id="check-alert-circle-start" checked>
+                    <span class="checkmark"></span>
+                    <span>Send SMS to Circle: "Started walk to [Destination]"</span>
+                  </label>
+                  <label class="checkbox-container">
+                    <input type="checkbox" id="check-continuous-audio">
+                    <span class="checkmark"></span>
+                    <span>Discreet background audio stream logging</span>
+                  </label>
+                </div>
+
+                <button id="btn-start-journey" class="btn-start-journey-cta">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                  </svg>
+                  <span>Start Live Protected Walk</span>
+                </button>
+              </div>
+
+              <!-- Active Tracking State Panel -->
+              <div id="journey-active-panel" class="journey-panel" style="display:none;">
+                <div class="active-countdown-box">
+                  <span class="countdown-label">TIME REMAINING TO SAFE CHECK-IN</span>
+                  <div class="digital-clock" id="journey-clock">14:59</div>
+                  <div class="progress-bar-container">
+                    <div class="progress-bar-fill" id="journey-progress-fill" style="width: 100%;"></div>
+                  </div>
+                  <div class="clock-destination-info">
+                    <span>En Route to: <strong id="active-dest-label">Central Metro Station</strong></span>
+                    <span id="active-eta-label">ETA: 11:49 AM</span>
+                  </div>
+                </div>
+
+                <div class="journey-heartbeat-warning" id="heartbeat-prompt-box">
+                  <div class="pulse-ring-amber"></div>
+                  <div class="heartbeat-message">
+                    <h4>Safety Heartbeat Check</h4>
+                    <p>Are you safe? Tap below to reset check-in window.</p>
+                  </div>
+                  <button id="btn-journey-heartbeat-ok" class="btn-heartbeat-ok">
+                    <span>✓ I'm Safe (Reset Timer)</span>
+                  </button>
+                </div>
+
+                <div class="journey-active-actions">
+                  <button id="btn-arrived-safely" class="btn-arrived-success">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                      <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                    <span>I Have Arrived Safely!</span>
+                  </button>
+
+                  <button id="btn-journey-extend" class="btn-action-ghost">
+                    <span>+5 Min Extend</span>
+                  </button>
+
+                  <button id="btn-journey-panic" class="btn-action-danger">
+                    <span>Immediate Distress</span>
+                  </button>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Journey Live Radar & Simulated Map -->
+            <div class="card journey-radar-card">
+              <div class="radar-header">
+                <div>
+                  <h3 class="panel-subtitle">Live Guardian Radar</h3>
+                  <p class="radar-sub">Real-time breadcrumb tracking & telemetry</p>
+                </div>
+                <div class="radar-ping-tag">
+                  <span class="radar-blip"></span>
+                  <span>LIVE SATELLITE SYNC</span>
+                </div>
+              </div>
+
+              <div class="radar-screen-wrap">
+                <div id="journey-mini-map" class="journey-leaflet-map"></div>
+                <div class="radar-hud-overlay">
+                  <div class="radar-hud-metric">
+                    <span class="hud-metric-label">SPEED</span>
+                    <span class="hud-metric-val" id="metric-speed">4.2 km/h</span>
+                  </div>
+                  <div class="radar-hud-metric">
+                    <span class="hud-metric-label">DISTANCE</span>
+                    <span class="hud-metric-val" id="metric-distance">0.8 km left</span>
+                  </div>
+                  <div class="radar-hud-metric">
+                    <span class="hud-metric-label">SAFETY INDEX</span>
+                    <span class="hud-metric-val text-green" id="metric-safety-index">94 / 100</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="journey-recent-logs" id="journey-event-logs">
+                <div class="log-item">
+                  <span class="log-time">Just Now</span>
+                  <span class="log-text">SafeCircle Guardian subsystem initialized.</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= VIEW 3: SAFE HAVENS & HAZARDS MAP ================= -->
+      <section id="view-map" class="content-view">
+        <div class="map-view-container">
+          <div class="map-controls-bar">
+            <div class="map-filter-group">
+              <button class="map-filter-btn active" data-filter="all">All Safe Havens</button>
+              <button class="map-filter-btn" data-filter="police">🛡️ Police Stations</button>
+              <button class="map-filter-btn" data-filter="hospital">🏥 Hospitals / 24h Clinics</button>
+              <button class="map-filter-btn" data-filter="store">🏪 24/7 Stores & Cafes</button>
+              <button class="map-filter-btn" data-filter="hazard">⚠️ Hazard Alerts</button>
+            </div>
+            
+            <div class="map-action-tools">
+              <button id="btn-recenter-map" class="btn-action-ghost" title="Center to My Live GPS">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <circle cx="12" cy="12" r="3"></circle>
+                  <line x1="12" y1="2" x2="12" y2="4"></line>
+                  <line x1="12" y1="20" x2="12" y2="22"></line>
+                  <line x1="20" y1="12" x2="22" y2="12"></line>
+                  <line x1="2" y1="12" x2="4" y2="12"></line>
+                </svg>
+                <span>My Location</span>
+              </button>
+
+              <button id="btn-report-hazard-modal" class="btn-action-warning">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                  <line x1="12" y1="9" x2="12" y2="13"></line>
+                  <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+                <span>Report Local Hazard</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="main-map-layout">
+            <!-- Full Interactive Leaflet Map -->
+            <div id="full-safe-map" class="leaflet-full-container"></div>
+
+            <!-- Sidebar Info Panel -->
+            <aside class="map-sidebar-havens">
+              <div class="sidebar-header">
+                <h3>Verified Safe Havens Nearby</h3>
+                <span class="havens-count-badge" id="havens-count-badge">8 Places</span>
+              </div>
+              <div class="havens-scroll-list" id="map-havens-scroll-list">
+                <!-- Rendered through JS -->
+              </div>
+            </aside>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= VIEW 4: SAFE CIRCLE MANAGEMENT ================= -->
+      <section id="view-circle" class="content-view">
+        <div class="circle-management-container">
+          <div class="circle-header-row">
+            <div>
+              <h2 class="view-title">My Trusted Guardian Circle</h2>
+              <p class="view-subtitle">Your inner circle receives instant emergency notifications with your real-time coordinates, live audio feed, and battery level.</p>
+            </div>
+            <button id="btn-add-contact-modal" class="btn-action-primary">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              <span>Add New Guardian</span>
+            </button>
+          </div>
+
+          <!-- Guardian Cards Grid -->
+          <div class="guardians-grid" id="guardians-full-grid">
+            <!-- Dynamically populated contacts -->
+          </div>
+
+          <!-- Broadcast / Circle Health Card -->
+          <div class="card circle-protocols-card">
+            <h3 class="panel-subtitle">Guardian Circle Dispatch Protocol</h3>
+            <div class="protocols-grid">
+              <div class="protocol-item">
+                <div class="proto-number">01</div>
+                <div class="proto-content">
+                  <h4>SMS & WhatsApp Dispatch</h4>
+                  <p>In SOS triggers, an instant message is sent to all 4 guardians with Google Maps coordinates and battery status.</p>
+                </div>
+              </div>
+
+              <div class="protocol-item">
+                <div class="proto-number">02</div>
+                <div class="proto-content">
+                  <h4>Live Location Streaming</h4>
+                  <p>Real-time breadcrumb coordinates refreshed every 10 seconds to help emergency responders reach you quickly.</p>
+                </div>
+              </div>
+
+              <div class="protocol-item">
+                <div class="proto-number">03</div>
+                <div class="proto-content">
+                  <h4>Audio Evidence Vault</h4>
+                  <p>Encrypted audio recording captures ambient conversations and is stored with forensic timestamp for legal evidence.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= VIEW 5: AEGIS AI SAFETY COPILOT ================= -->
+      <section id="view-ai-assistant" class="content-view">
+        <div class="ai-copilot-container">
+          <div class="card ai-chat-card">
+            
+            <div class="ai-header">
+              <div class="ai-avatar-shield">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                  <path d="M12 8v4"/>
+                  <path d="M12 16h.01"/>
+                </svg>
+              </div>
+              <div class="ai-header-info">
+                <h3>Aegis AI Safety Copilot</h3>
+                <p>Trained on tactical defense, emergency protocols, de-escalation & travel legalities</p>
+              </div>
+              <div class="ai-speech-toggle">
+                <button id="btn-toggle-tts" class="btn-action-ghost" title="Toggle Voice Speech Output">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                  </svg>
+                  <span id="tts-label">Voice: ON</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Preset Quick Prompts -->
+            <div class="ai-preset-chips" id="ai-prompts-container">
+              <button class="ai-chip" data-prompt="What should I do if I suspect someone is following me right now?">👀 Being Followed?</button>
+              <button class="ai-chip" data-prompt="How do I safely handle an uncomfortable rideshare or taxi ride?">🚕 Rideshare Red Flags</button>
+              <button class="ai-chip" data-prompt="Teach me 3 verbal de-escalation techniques for aggressive confrontations.">🗣️ Verbal De-escalation</button>
+              <button class="ai-chip" data-prompt="What are key safety rules for walking alone at night in an unfamiliar area?">🌙 Night Solo Walk Tips</button>
+              <button class="ai-chip" data-prompt="What evidence should I collect after experiencing harassment or assault?">⚖️ Evidence & Legal Rights</button>
+            </div>
+
+            <!-- Chat Stream Area -->
+            <div class="ai-chat-messages" id="ai-messages-list">
+              <div class="ai-message msg-bot">
+                <div class="msg-avatar">🛡️</div>
+                <div class="msg-bubble">
+                  <p><strong>Greetings. I am Aegis, your AI Personal Safety Copilot.</strong></p>
+                  <p>I can guide you through real-time threat assessments, discreet escape strategies, crisis protocols, self-defense legal rights, or travel security advice. How can I assist you right now?</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Input area -->
+            <div class="ai-chat-input-bar">
+              <input type="text" id="ai-input-field" placeholder="Ask Aegis anything (e.g. 'Someone is knocking on my door claiming to be maintenance...')" autocomplete="off">
+              <button id="btn-send-ai-message" class="btn-send-ai">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <line x1="22" y1="2" x2="11" y2="13"></line>
+                  <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
+              </button>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= VIEW 6: EVIDENCE VAULT ================= -->
+      <section id="view-vault" class="content-view">
+        <div class="vault-container">
+          <div class="vault-header">
+            <div>
+              <h2 class="view-title">Secure Incident & Evidence Vault</h2>
+              <p class="view-subtitle">Tamper-evident logs of your emergency activations, audio records, check-in pings, and incident documentation.</p>
+            </div>
+            <div class="vault-actions">
+              <button id="btn-export-vault" class="btn-action-secondary">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                <span>Export Official Incident Report</span>
+              </button>
+              <button id="btn-add-manual-log" class="btn-action-primary">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                <span>Log Incident Note</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="vault-grid">
+            <!-- Vault Table / Cards -->
+            <div class="card vault-records-card">
+              <div class="card-header-flex">
+                <h3 class="panel-subtitle">Recorded Incidents & Telemetry</h3>
+                <span class="vault-tag" id="vault-count-badge">3 Records</span>
+              </div>
+              
+              <div class="vault-records-list" id="vault-records-list">
+                <!-- Dynamically rendered logs -->
+              </div>
+            </div>
+
+            <!-- Forensic Certificate Card -->
+            <div class="card vault-forensic-info">
+              <h3 class="panel-subtitle">Forensic Chain of Custody</h3>
+              <p class="forensic-desc">All incidents recorded via SafeCircle embed cryptographic SHA-256 local timestamps, device state, and battery telemetry acceptable as supporting evidence in legal proceedings.</p>
+              
+              <div class="forensic-meta-box">
+                <div class="meta-row">
+                  <span>Device Fingerprint:</span>
+                  <code id="meta-fingerprint">SC-8891-SECURE-WEB</code>
+                </div>
+                <div class="meta-row">
+                  <span>Current Hash Standard:</span>
+                  <code>SHA-256 / W3C Geolocation</code>
+                </div>
+                <div class="meta-row">
+                  <span>Local Storage Encryption:</span>
+                  <span class="badge-active">ACTIVE ON-DEVICE</span>
+                </div>
+              </div>
+
+              <div class="vault-tips">
+                <h4>Safety Legal Tip</h4>
+                <p>Always preserve unedited original audio recordings and timestamped text messages when reporting harassment or stalking incidents to local authorities.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Bottom Navigation Bar for Mobile -->
+    <nav class="bottom-nav-mobile" aria-label="Mobile Navigation">
+      <button class="b-nav-item active" data-view="dashboard">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+        <span>SOS</span>
+      </button>
+
+      <button class="b-nav-item" data-view="journey">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+        <span>Walk</span>
+      </button>
+
+      <button class="b-nav-item" data-view="map">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
+        </svg>
+        <span>Havens</span>
+      </button>
+
+      <button class="b-nav-item" data-view="circle">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+        </svg>
+        <span>Circle</span>
+      </button>
+
+      <button class="b-nav-item" data-view="ai-assistant">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+        </svg>
+        <span>Aegis AI</span>
+      </button>
+    </nav>
+
+  </div>
+
+  <!-- ==================== MODAL: EMERGENCY SOS TRIGGER COUNTDOWN & ALARM ==================== -->
+  <div id="modal-sos-countdown" class="modal-backdrop-danger modal-hidden" role="dialog" aria-modal="true" aria-labelledby="sos-modal-title">
+    <div class="sos-modal-dialog">
+      <div class="sos-countdown-ring">
+        <svg class="ring-svg" viewBox="0 0 120 120">
+          <circle class="ring-bg" cx="60" cy="60" r="54"></circle>
+          <circle class="ring-progress" id="sos-circle-progress" cx="60" cy="60" r="54"></circle>
+        </svg>
+        <div class="countdown-digit" id="sos-countdown-digit">3</div>
+      </div>
+
+      <h2 id="sos-modal-title" class="sos-modal-title">EMERGENCY SOS INITIATED</h2>
+      <p class="sos-modal-desc">Broadcasting distress signal to <strong id="sos-guardian-names">Mom, Alex & 2 Others</strong> with live GPS coordinates & dispatching siren in...</p>
+
+      <div class="sos-modal-actions">
+        <button id="btn-cancel-sos" class="btn-cancel-countdown">
+          <span>CANCEL ALARM (FALSE ALARM)</span>
+        </button>
+        <button id="btn-force-sos-now" class="btn-force-dispatch">
+          <span>SEND DISPATCH NOW</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: SOS ACTIVE LOCKDOWN & DISPATCH REPORT ==================== -->
+  <div id="modal-sos-active" class="modal-backdrop-danger modal-hidden" role="dialog" aria-modal="true">
+    <div class="sos-active-dialog">
+      <div class="sos-flashing-header">
+        <span class="beacon-pulse-red"></span>
+        <h2>🚨 EMERGENCY ACTIVE: DISPATCHED</h2>
+      </div>
+
+      <p class="active-alert-sub">Your Safe Circle & Emergency Responders have been signaled.</p>
+
+      <div class="active-dispatch-card">
+        <div class="dispatch-detail-row">
+          <span>Current Coordinates:</span>
+          <strong id="active-sos-coords">37.7749° N, 122.4194° W</strong>
+        </div>
+        <div class="dispatch-detail-row">
+          <span>SMS / WhatsApp Alert:</span>
+          <span class="badge-success">SENT TO 4 GUARDIANS</span>
+        </div>
+        <div class="dispatch-detail-row">
+          <span>Audio Evidence:</span>
+          <span class="badge-recording">🔴 RECORDING (00:32)</span>
+        </div>
+        <div class="dispatch-detail-row">
+          <span>Alarm Siren:</span>
+          <strong id="active-siren-status">BLASTING (120dB)</strong>
+        </div>
+      </div>
+
+      <div class="sos-active-controls">
+        <button id="btn-stop-siren-only" class="btn-action-ghost">Mute Siren Only</button>
+        <button id="btn-declare-safe" class="btn-success-lg">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          <span>I Am Safe (Disarm Emergency)</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: REALISTIC FAKE CALL SIMULATOR ==================== -->
+  <div id="modal-fake-call" class="fake-call-container modal-hidden" role="dialog" aria-modal="true">
+    <div class="fake-call-screen" id="fake-call-screen">
+      
+      <!-- Top Call Bar -->
+      <div class="call-top-bar">
+        <span class="call-type-tag">SafeCircle Discretion Shield</span>
+        <button id="btn-dismiss-fake-call" class="btn-call-quit" title="Close">✕</button>
+      </div>
+
+      <!-- Caller Avatar & Name -->
+      <div class="caller-profile">
+        <div class="caller-avatar" id="fake-caller-avatar">
+          <span>M</span>
+        </div>
+        <h2 class="caller-name" id="fake-caller-name">Mom</h2>
+        <p class="call-state-text" id="fake-call-state">Mobile Calling...</p>
+      </div>
+
+      <!-- INCOMING CALL CONTROLS -->
+      <div class="incoming-controls" id="fake-incoming-controls">
+        <div class="incoming-slider-group">
+          <button id="btn-fake-decline" class="btn-call-circle btn-decline" title="Decline Call">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08a.99.99 0 0 1 0-1.41C2.5 9.47 5.92 8 9.5 8c3.58 0 7 1.47 9.21 3.67.39.39.39 1.02 0 1.41l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.1-.7-.28-.79-.73-1.68-1.36-2.66-1.85-.33-.16-.56-.51-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/>
+            </svg>
+            <span class="btn-call-caption">Decline</span>
+          </button>
+
+          <button id="btn-fake-accept" class="btn-call-circle btn-accept" title="Accept Call">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 0 0-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z"/>
+            </svg>
+            <span class="btn-call-caption">Accept</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ACTIVE CALL CONTROLS (Displayed when accepted) -->
+      <div class="active-call-controls" id="fake-active-controls" style="display:none;">
+        <div class="call-duration-timer" id="fake-call-timer">00:01</div>
+        <div class="call-keypad-grid">
+          <div class="call-action-btn">
+            <span class="call-icon">🔇</span>
+            <span>Mute</span>
+          </div>
+          <div class="call-action-btn">
+            <span class="call-icon">🔢</span>
+            <span>Keypad</span>
+          </div>
+          <div class="call-action-btn">
+            <span class="call-icon">🔊</span>
+            <span>Speaker</span>
+          </div>
+        </div>
+
+        <div class="active-end-call-row">
+          <button id="btn-fake-hangup" class="btn-call-circle btn-decline" title="End Call">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08a.99.99 0 0 1 0-1.41C2.5 9.47 5.92 8 9.5 8c3.58 0 7 1.47 9.21 3.67.39.39.39 1.02 0 1.41l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.1-.7-.28-.79-.73-1.68-1.36-2.66-1.85-.33-.16-.56-.51-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/>
+            </svg>
+            <span class="btn-call-caption">End Call</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: FULLSCREEN EMERGENCY STROBE FLASHER ==================== -->
+  <div id="modal-strobe-flasher" class="strobe-overlay modal-hidden">
+    <div class="strobe-hud">
+      <div class="strobe-warning-badge">⚠️ HIGH INTENSITY DISTRESS BEACON ACTIVE</div>
+      <p class="strobe-instructions">Point screen outward towards threats or search teams.</p>
+      <button id="btn-stop-strobe" class="btn-disarm-strobe">EXIT STROBE BEACON</button>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: EMERGENCY HELPLINES DIRECTORY ==================== -->
+  <div id="modal-helplines" class="modal-backdrop modal-hidden" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <h3>Emergency Helplines Directory</h3>
+          <p>Instant dial or access verified emergency response centers</p>
+        </div>
+        <button class="btn-modal-close" id="btn-close-helplines">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="region-selector">
+          <label>Country / Region:</label>
+          <select id="helpline-country-select" class="custom-select">
+            <option value="us">United States & Canada (911)</option>
+            <option value="uk">United Kingdom (999 / 111)</option>
+            <option value="eu">European Union (112)</option>
+            <option value="in" selected>India (112 / 1091 / 100)</option>
+            <option value="au">Australia (000)</option>
+          </select>
+        </div>
+
+        <div class="helplines-table-wrap" id="helplines-list-container">
+          <!-- Populated via JS based on selected country -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: ADD / EDIT GUARDIAN CONTACT ==================== -->
+  <div id="modal-add-guardian" class="modal-backdrop modal-hidden" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <h3 id="guardian-modal-title">Add Trusted Guardian</h3>
+          <p>Enter contact details for your immediate safety circle</p>
+        </div>
+        <button class="btn-modal-close" id="btn-close-guardian-modal">✕</button>
+      </div>
+
+      <form id="form-guardian" class="modal-body">
+        <input type="hidden" id="guardian-edit-id" value="">
+        <div class="form-group">
+          <label for="guardian-name-input">Full Name / Relationship</label>
+          <input type="text" id="guardian-name-input" class="custom-input" placeholder="e.g. Mom, Partner, Alex Smith" required>
+        </div>
+
+        <div class="form-group">
+          <label for="guardian-phone-input">Phone Number (with Country Code)</label>
+          <input type="tel" id="guardian-phone-input" class="custom-input" placeholder="+1 (555) 019-2834" required>
+        </div>
+
+        <div class="form-group">
+          <label for="guardian-tier-select">Alert Priority Tier</label>
+          <select id="guardian-tier-select" class="custom-select">
+            <option value="Primary" selected>Primary (Instant Call & SMS)</option>
+            <option value="Secondary">Secondary (SMS Alert)</option>
+            <option value="Campus">Campus / Local Security</option>
+          </select>
+        </div>
+
+        <div class="modal-footer-actions">
+          <button type="button" class="btn-action-ghost" id="btn-cancel-guardian">Cancel</button>
+          <button type="submit" class="btn-action-primary">Save to SafeCircle</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: REPORT HAZARD ==================== -->
+  <div id="modal-report-hazard" class="modal-backdrop modal-hidden" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <h3>Report Local Hazard / Safety Caution</h3>
+          <p>Warn the SafeCircle community about dangerous zones</p>
+        </div>
+        <button class="btn-modal-close" id="btn-close-hazard-modal">✕</button>
+      </div>
+
+      <form id="form-hazard" class="modal-body">
+        <div class="form-group">
+          <label for="hazard-title-input">Hazard Description</label>
+          <input type="text" id="hazard-title-input" class="custom-input" placeholder="e.g. Broken streetlights, aggressive dogs, unmonitored alley" required>
+        </div>
+
+        <div class="form-group">
+          <label for="hazard-type-select">Hazard Type</label>
+          <select id="hazard-type-select" class="custom-select">
+            <option value="lighting">⚠️ Poor / Zero Lighting</option>
+            <option value="suspicious">⚠️ Suspicious Activity Reported</option>
+            <option value="isolated">⚠️ Isolated / Blind Alley</option>
+            <option value="construction">🚧 Road Block / Construction</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="hazard-severity-select">Severity Level</label>
+          <select id="hazard-severity-select" class="custom-select">
+            <option value="Medium" selected>Moderate Caution</option>
+            <option value="High">High Risk (Avoid After Dark)</option>
+            <option value="Critical">Immediate Danger</option>
+          </select>
+        </div>
+
+        <div class="modal-footer-actions">
+          <button type="button" class="btn-action-ghost" id="btn-cancel-hazard">Cancel</button>
+          <button type="submit" class="btn-action-warning">Broadcast Report</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: MANUAL INCIDENT LOG NOTE ==================== -->
+  <div id="modal-incident-note" class="modal-backdrop modal-hidden" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <h3>Log Incident into Evidence Vault</h3>
+          <p>Attach notes, license plates, physical descriptions, or encounters</p>
+        </div>
+        <button class="btn-modal-close" id="btn-close-note-modal">✕</button>
+      </div>
+
+      <form id="form-incident-note" class="modal-body">
+        <div class="form-group">
+          <label for="note-title-input">Incident Subject</label>
+          <input type="text" id="note-title-input" class="custom-input" placeholder="e.g. Unidentified car following on 4th St" required>
+        </div>
+
+        <div class="form-group">
+          <label for="note-details-input">Detailed Notes (Vehicles, Appearance, Quotes)</label>
+          <textarea id="note-details-input" class="custom-textarea" rows="4" placeholder="Describe timestamps, license plate letters, clothing, or behavior..." required></textarea>
+        </div>
+
+        <div class="modal-footer-actions">
+          <button type="button" class="btn-action-ghost" id="btn-cancel-note">Cancel</button>
+          <button type="submit" class="btn-action-primary">Store in Cryptographic Vault</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Global Toast Notification Container -->
+  <div id="toast-container" class="toast-stack" aria-live="polite"></div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <!-- Application Logic -->
+  <script src="app.js"></script>
+</body>
+</html>
